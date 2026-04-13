@@ -38,3 +38,4 @@ jobs:
           git add portfolio_log.csv
           git commit -m "update portfolio log" || echo "no changes"
           git push
+
