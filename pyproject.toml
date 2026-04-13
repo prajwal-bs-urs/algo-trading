@@ -1,0 +1,12 @@
+[project]
+name = "algo-trading"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "backtesting>=0.6.5",
+    "matplotlib>=3.10.8",
+    "pandas>=2.3.3",
+    "yfinance>=1.2.1",
+]
