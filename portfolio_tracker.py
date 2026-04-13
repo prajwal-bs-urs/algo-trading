@@ -10,7 +10,7 @@ from telegram_alert import send_message, send_photo
 LOG_FILE = "portfolio_log.csv"
 CHART_FILE = "equity_curve.png"
 
-INITIAL_CAPITAL = 100000
+INITIAL_CAPITAL = 500000
 
 SIGNAL_MAP = {
     0: "CASH",
@@ -44,22 +44,30 @@ def update_portfolio():
         last_asset = df.iloc[-1]["Allocation"]
         last_value = df.iloc[-1]["Portfolio_Value"]
 
+        benchmark_value = df.iloc[-1]["Benchmark_Value"]
+
     else:
 
         df = pd.DataFrame(columns=[
             "Date",
             "Allocation",
             "Action",
-            "Portfolio_Value"
+            "Portfolio_Value",
+            "Benchmark_Value"
         ])
 
         last_asset = None
         last_value = INITIAL_CAPITAL
+        benchmark_value = INITIAL_CAPITAL
+
+    # Detect switch
 
     if last_asset == today_asset:
         action = "HOLD"
     else:
         action = "SWITCH"
+
+    # Update strategy portfolio value
 
     new_value = last_value
 
@@ -73,28 +81,38 @@ def update_portfolio():
         daily_return = (bank_today - bank_yesterday) / bank_yesterday
         new_value = last_value * (1 + daily_return)
 
+    # Update benchmark (always NIFTY)
+
+    benchmark_return = (nifty_today - nifty_yesterday) / nifty_yesterday
+    benchmark_value = benchmark_value * (1 + benchmark_return)
+
     new_entry = pd.DataFrame([{
         "Date": today,
         "Allocation": today_asset,
         "Action": action,
-        "Portfolio_Value": round(new_value, 2)
+        "Portfolio_Value": round(new_value, 2),
+        "Benchmark_Value": round(benchmark_value, 2)
     }])
 
     df = pd.concat([df, new_entry], ignore_index=True)
 
     df.to_csv(LOG_FILE, index=False)
 
-    # Generate equity curve chart
+    # Generate comparison chart
 
     plt.figure(figsize=(10, 5))
 
-    plt.plot(df["Portfolio_Value"])
+    plt.plot(df["Portfolio_Value"], label="Strategy")
 
-    plt.title("Portfolio Equity Curve")
+    plt.plot(df["Benchmark_Value"], label="NIFTY Benchmark")
+
+    plt.title("Strategy vs Benchmark")
 
     plt.xlabel("Days")
 
     plt.ylabel("Portfolio Value (₹)")
+
+    plt.legend()
 
     plt.grid(True)
 
@@ -112,6 +130,8 @@ Allocation: {today_asset}
 Action: {action}
 
 Portfolio Value: ₹{round(new_value, 2)}
+
+Benchmark Value: ₹{round(benchmark_value, 2)}
 """
 
     print(message)
