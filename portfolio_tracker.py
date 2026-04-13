@@ -1,16 +1,16 @@
 from datetime import datetime
 import os
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from data_loader import get_data
 from strategy import generate_signals
-from telegram_alert import send_message
-
+from telegram_alert import send_message, send_photo
 
 LOG_FILE = "portfolio_log.csv"
+CHART_FILE = "equity_curve.png"
 
-INITIAL_CAPITAL = 500000
-
+INITIAL_CAPITAL = 100000
 
 SIGNAL_MAP = {
     0: "CASH",
@@ -20,11 +20,9 @@ SIGNAL_MAP = {
 
 
 def update_portfolio():
-
     today = datetime.today().strftime("%Y-%m-%d")
 
     data = get_data()
-
     data = generate_signals(data)
 
     today_signal = int(data.iloc[-1]["Signal"])
@@ -38,7 +36,6 @@ def update_portfolio():
 
     bank_today = today_row["BANK"]
     bank_yesterday = yesterday_row["BANK"]
-
 
     if os.path.exists(LOG_FILE):
 
@@ -59,19 +56,10 @@ def update_portfolio():
         last_asset = None
         last_value = INITIAL_CAPITAL
 
-
-    # Detect action
-
     if last_asset == today_asset:
-
         action = "HOLD"
-
     else:
-
         action = "SWITCH"
-
-
-    # Update portfolio value
 
     new_value = last_value
 
@@ -85,9 +73,6 @@ def update_portfolio():
         daily_return = (bank_today - bank_yesterday) / bank_yesterday
         new_value = last_value * (1 + daily_return)
 
-    # CASH remains unchanged
-
-
     new_entry = pd.DataFrame([{
         "Date": today,
         "Allocation": today_asset,
@@ -95,11 +80,27 @@ def update_portfolio():
         "Portfolio_Value": round(new_value, 2)
     }])
 
-
     df = pd.concat([df, new_entry], ignore_index=True)
 
     df.to_csv(LOG_FILE, index=False)
 
+    # Generate equity curve chart
+
+    plt.figure(figsize=(10, 5))
+
+    plt.plot(df["Portfolio_Value"])
+
+    plt.title("Portfolio Equity Curve")
+
+    plt.xlabel("Days")
+
+    plt.ylabel("Portfolio Value (₹)")
+
+    plt.grid(True)
+
+    plt.savefig(CHART_FILE)
+
+    plt.close()
 
     message = f"""
 📊 Portfolio Update
@@ -113,12 +114,12 @@ Action: {action}
 Portfolio Value: ₹{round(new_value, 2)}
 """
 
-
     print(message)
 
     send_message(message)
 
+    send_photo(CHART_FILE)
+
 
 if __name__ == "__main__":
-
     update_portfolio()
