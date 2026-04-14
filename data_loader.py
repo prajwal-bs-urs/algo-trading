@@ -3,7 +3,6 @@ import pandas as pd
 
 
 def download(symbol):
-
     print(f"Downloading {symbol}...")
 
     df = yf.download(symbol, period="10y", progress=False)
@@ -15,7 +14,6 @@ def download(symbol):
 
 
 def get_data():
-
     print("Downloading index data...")
 
     nifty = download("^NSEI")
