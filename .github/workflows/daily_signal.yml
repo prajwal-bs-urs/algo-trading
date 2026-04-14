@@ -3,7 +3,6 @@ name: Weekly Rotation Signal
 on:
   schedule:
     - cron: "35 10 * * 5"
-
   workflow_dispatch:
 
 jobs:
@@ -26,12 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install \
-            yfinance==0.2.40 \
-            pandas==2.2.2 \
-            requests==2.31.0 \
-            python-dotenv==1.0.1 \
-            matplotlib==3.8.4
+          pip install -r requirements.txt
 
       - name: Print execution timestamp
         run: date
@@ -40,10 +34,11 @@ jobs:
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
-        run: python daily_signal.py
+        run: |
+          python ./daily_signal.py || python ./daily_signal.py
 
       - name: Log signal history
-        run: python signal_logger.py
+        run: python ./signal_logger.py
 
       - name: Commit updated signal history
         run: |
@@ -54,7 +49,7 @@ jobs:
 
           git diff --cached --quiet || git commit -m "Update signal history"
 
-          git push
+          git push origin main
 
       - name: Upload signal history artifact
         uses: actions/upload-artifact@v4
