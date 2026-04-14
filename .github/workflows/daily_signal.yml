@@ -1,47 +1,76 @@
-name: Portfolio Automation
+name: Weekly Rotation Signal
 
 on:
   schedule:
-    - cron: '05 11 * * 1-5'
-    - cron: '10 11 28-31 * *'
+    - cron: "35 10 * * 5"
+
   workflow_dispatch:
 
 jobs:
-  run-script:
+  run-signal:
     runs-on: ubuntu-latest
 
     permissions:
       contents: write
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
-          pip install yfinance pandas requests python-dotenv matplotlib
+          pip install --upgrade pip
+          pip install \
+            yfinance==0.2.40 \
+            pandas==2.2.2 \
+            requests==2.31.0 \
+            python-dotenv==1.0.1 \
+            matplotlib==3.8.4
 
-      - name: Run daily tracker
+      - name: Print execution timestamp
+        run: date
+
+      - name: Run allocator signal script
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
-        run: python portfolio_tracker.py
+        run: python daily_signal.py
 
-      - name: Run monthly report if last day
-        env:
-          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          CHAT_ID: ${{ secrets.CHAT_ID }}
-        run: python monthly_report.py
+      - name: Log signal history
+        run: python signal_logger.py
 
-      - name: Commit portfolio log
+      - name: Commit updated signal history
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add portfolio_log.csv
-          git commit -m "update portfolio log" || echo "no changes"
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+
+          git add signal_history.csv
+
+          git diff --cached --quiet || git commit -m "Update signal history"
+
           git push
+
+      - name: Upload signal history artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: allocator-signal-history
+          path: signal_history.csv
+
+      - name: Notify failure on Telegram
+        if: failure()
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
+          -d chat_id=${CHAT_ID} \
+          -d text="⚠️ Allocator signal workflow FAILED. Check GitHub Actions logs."
+
+      - name: Workflow completed
+        run: echo "Signal delivery completed successfully."

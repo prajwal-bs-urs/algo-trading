@@ -1,15 +1,17 @@
 from data_loader import get_data
 from strategy import generate_signals
 from config import INITIAL_CAPITAL
+from performance_metrics import generate_performance_report
+from benchmark_comparison import benchmark_report
 
 import pandas as pd
 import matplotlib.pyplot as plt
 
 
+TRANSITION_COST = 0.002
+
+
 def calculate_drawdown(equity_curve):
-    """
-    Calculates maximum drawdown from equity curve
-    """
 
     equity_series = pd.Series(equity_curve)
 
@@ -20,11 +22,33 @@ def calculate_drawdown(equity_curve):
     return drawdown.min()
 
 
+def signal_to_position(signal):
+
+    if signal == 1:
+        return "NIFTY"
+
+    elif signal == 2:
+        return "BANK"
+
+    elif signal == 3:
+        return "MIDCAP"
+
+    elif signal == 4:
+        return "GOLD"
+
+    elif signal == 5:
+        return "USDINR"
+
+    return None
+
+
 def run_backtest():
 
-    print("Running backtest...")
+    print("Running realistic execution backtest...")
 
     data = get_data()
+
+    print("Dataset length (years):", len(data) / 252)
 
     data = generate_signals(data)
 
@@ -32,88 +56,128 @@ def run_backtest():
     position = None
     units = 0
 
+    trade_count = 0
+
     equity_curve = []
 
-
-    for index, row in data.iterrows():
+    for _, row in data.iterrows():
 
         signal = row["Signal"]
 
+        target_position = signal_to_position(signal)
+
         nifty_price = row["NIFTY"]
         bank_price = row["BANK"]
+        midcap_price = row["MIDCAP"]
+        gold_price = row["GOLD"]
+        usdinr_price = row["USDINR"]
 
+        # =============================
+        # Position switching logic
+        # =============================
 
-        # SWITCH TO NIFTY
-        if signal == 1:
+        if target_position != position:
 
-            if position == "BANK":
-                capital = units * bank_price
-                units = 0
-
-            if position != "NIFTY":
-                units = capital / nifty_price
-                capital = 0
-                position = "NIFTY"
-
-
-        # SWITCH TO BANK
-        elif signal == 2:
+            # Exit current position
 
             if position == "NIFTY":
+
                 capital = units * nifty_price
-                units = 0
-
-            if position != "BANK":
-                units = capital / bank_price
-                capital = 0
-                position = "BANK"
-
-
-        # MOVE TO CASH
-        else:
-
-            if position == "NIFTY":
-                capital = units * nifty_price
-                units = 0
-                position = None
 
             elif position == "BANK":
+
                 capital = units * bank_price
-                units = 0
-                position = None
 
+            elif position == "MIDCAP":
 
-        # PORTFOLIO VALUATION
+                capital = units * midcap_price
+
+            elif position == "GOLD":
+
+                capital = units * gold_price
+
+            elif position == "USDINR":
+
+                capital = units * usdinr_price
+
+            units = 0
+
+            # Apply transition cost once
+
+            capital *= (1 - TRANSITION_COST)
+
+            # Enter new position
+
+            if target_position == "NIFTY":
+
+                units = capital / nifty_price
+                capital = 0
+
+            elif target_position == "BANK":
+
+                units = capital / bank_price
+                capital = 0
+
+            elif target_position == "MIDCAP":
+
+                units = capital / midcap_price
+                capital = 0
+
+            elif target_position == "GOLD":
+
+                units = capital / gold_price
+                capital = 0
+
+            elif target_position == "USDINR":
+
+                units = capital / usdinr_price
+                capital = 0
+
+            position = target_position
+
+            trade_count += 1
+
+        # =============================
+        # Portfolio valuation
+        # =============================
 
         if position == "NIFTY":
+
             portfolio_value = units * nifty_price
 
         elif position == "BANK":
+
             portfolio_value = units * bank_price
 
+        elif position == "MIDCAP":
+
+            portfolio_value = units * midcap_price
+
+        elif position == "GOLD":
+
+            portfolio_value = units * gold_price
+
+        elif position == "USDINR":
+
+            portfolio_value = units * usdinr_price
+
         else:
+
             portfolio_value = capital
 
-
         equity_curve.append(portfolio_value)
-
-
-    # FINAL METRICS
 
     final_value = equity_curve[-1]
 
     profit = final_value - INITIAL_CAPITAL
 
-    years = 5
+    years = len(data) / 252
 
     CAGR = ((final_value / INITIAL_CAPITAL) ** (1 / years) - 1) * 100
 
     max_drawdown = calculate_drawdown(equity_curve) * 100
 
-
-    # PRINT RESULTS
-
-    print("\n========== BACKTEST RESULTS ==========")
+    print("\n========== REALISTIC BACKTEST RESULTS ==========")
 
     print("Initial Capital:", INITIAL_CAPITAL)
 
@@ -127,23 +191,27 @@ def run_backtest():
 
     print("Max Drawdown:", round(max_drawdown, 2), "%")
 
+    print("Total transitions:", trade_count)
 
-    # EQUITY CURVE PLOT
+    generate_performance_report(equity_curve)
 
-    plt.figure(figsize=(12, 6))
+    benchmark_report(equity_curve, data["NIFTY"])
+
+    # =============================
+    # Plot equity curve
+    # =============================
 
     plt.plot(equity_curve)
 
-    plt.title("Strategy Equity Curve")
+    plt.title("Equity Curve (Macro Tactical Allocation)")
 
-    plt.xlabel("Trading Days")
+    plt.xlabel("Days")
 
     plt.ylabel("Portfolio Value")
-
-    plt.grid(True)
 
     plt.show()
 
 
 if __name__ == "__main__":
+
     run_backtest()

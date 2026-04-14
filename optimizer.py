@@ -4,7 +4,6 @@ import pandas as pd
 
 
 def calculate_drawdown(equity_curve):
-
     equity_series = pd.Series(equity_curve)
 
     rolling_max = equity_series.cummax()
@@ -15,7 +14,6 @@ def calculate_drawdown(equity_curve):
 
 
 def run_backtest(window):
-
     data = get_data()
 
     # Relative strength ratio
@@ -41,13 +39,11 @@ def run_backtest(window):
         "Signal"
     ] = 1
 
-
     capital = INITIAL_CAPITAL
     position = None
     units = 0
 
     equity_curve = []
-
 
     for _, row in data.iterrows():
 
@@ -56,16 +52,13 @@ def run_backtest(window):
         nifty_price = row["NIFTY"]
         bank_price = row["BANK"]
 
-
         if signal == 1:
 
             if position == "BANK":
-
                 capital = units * bank_price
                 units = 0
 
             if position != "NIFTY":
-
                 units = capital / nifty_price
                 capital = 0
                 position = "NIFTY"
@@ -74,12 +67,10 @@ def run_backtest(window):
         elif signal == 2:
 
             if position == "NIFTY":
-
                 capital = units * nifty_price
                 units = 0
 
             if position != "BANK":
-
                 units = capital / bank_price
                 capital = 0
                 position = "BANK"
@@ -99,7 +90,6 @@ def run_backtest(window):
                 units = 0
                 position = None
 
-
         if position == "NIFTY":
 
             portfolio_value = units * nifty_price
@@ -112,9 +102,7 @@ def run_backtest(window):
 
             portfolio_value = capital
 
-
         equity_curve.append(portfolio_value)
-
 
     final_value = equity_curve[-1]
 
@@ -132,15 +120,13 @@ print("\nRunning parameter robustness test...\n")
 results = []
 
 for window in range(10, 65, 5):
-
     CAGR, dd = run_backtest(window)
 
     results.append((window, CAGR, dd))
 
     print(
-        f"Window={window} | CAGR={round(CAGR,2)}% | Drawdown={round(dd,2)}%"
+        f"Window={window} | CAGR={round(CAGR, 2)}% | Drawdown={round(dd, 2)}%"
     )
-
 
 best = max(results, key=lambda x: x[1])
 

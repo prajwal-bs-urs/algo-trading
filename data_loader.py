@@ -1,49 +1,44 @@
 import yfinance as yf
 import pandas as pd
-from datetime import datetime, timedelta
-from config import SYMBOL_1, SYMBOL_2
+
+
+def download(symbol):
+
+    print(f"Downloading {symbol}...")
+
+    df = yf.download(symbol, period="10y", progress=False)
+
+    if df.empty:
+        raise ValueError(f"Failed to download {symbol}")
+
+    return df["Close"]
 
 
 def get_data():
 
-    print("Downloading ETF data...")
+    print("Downloading index data...")
 
-    end_date = datetime.today()
-    start_date = end_date - timedelta(days=5 * 365)
+    nifty = download("^NSEI")
+    bank = download("^NSEBANK")
+    midcap = download("^NSEMDCP50")
+    gold = download("GC=F")
+    usdinr = download("INR=X")
 
-    nifty = yf.download(
-        SYMBOL_1,
-        start=start_date,
-        end=end_date,
-        progress=False
-    )
-
-    bank = yf.download(
-        SYMBOL_2,
-        start=start_date,
-        end=end_date,
-        progress=False
-    )
-
-    if nifty.empty:
-        raise ValueError(f"Failed to download data for {SYMBOL_1}")
-
-    if bank.empty:
-        raise ValueError(f"Failed to download data for {SYMBOL_2}")
-
-    # Extract Close prices only
-    nifty_close = nifty["Close"]
-    bank_close = bank["Close"]
-
-    # Align both datasets on same dates
     data = pd.concat(
-        [nifty_close, bank_close],
-        axis=1,
-        join="inner"
+        [nifty, bank, midcap, gold, usdinr],
+        axis=1
     )
 
-    data.columns = ["NIFTY", "BANK"]
+    data.columns = [
+        "NIFTY",
+        "BANK",
+        "MIDCAP",
+        "GOLD",
+        "USDINR"
+    ]
 
     data.dropna(inplace=True)
+
+    print("Dataset length (years):", len(data) / 252)
 
     return data
