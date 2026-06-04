@@ -1,25 +1,12 @@
 from data_loader import get_data
 from strategy import generate_signals
-from config import INITIAL_CAPITAL
+from config import INITIAL_CAPITAL, TRANSITION_COST
 from performance_metrics import generate_performance_report
 from benchmark_comparison import benchmark_report
 
 import pandas as pd
 import matplotlib.pyplot as plt
-
-
-TRANSITION_COST = 0.002
-
-
-def calculate_drawdown(equity_curve):
-
-    equity_series = pd.Series(equity_curve)
-
-    rolling_max = equity_series.cummax()
-
-    drawdown = (equity_series - rolling_max) / rolling_max
-
-    return drawdown.min()
+from performance_metrics import calculate_max_drawdown
 
 
 def signal_to_position(signal):
@@ -175,7 +162,7 @@ def run_backtest():
 
     CAGR = ((final_value / INITIAL_CAPITAL) ** (1 / years) - 1) * 100
 
-    max_drawdown = calculate_drawdown(equity_curve) * 100
+    max_drawdown = calculate_max_drawdown(equity_curve) * 100
 
     print("\n========== REALISTIC BACKTEST RESULTS ==========")
 
