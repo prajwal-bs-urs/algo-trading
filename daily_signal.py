@@ -2,11 +2,9 @@ from data_loader import get_data
 from strategy import generate_signals
 from telegram_alert import send_message
 from portfolio_nav import compute_portfolio_nav
+from config import INITIAL_CAPITAL
 
 from datetime import datetime
-
-
-INITIAL_CAPITAL = 100000
 
 
 # ==============================
