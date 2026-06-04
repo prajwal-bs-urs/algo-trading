@@ -9,6 +9,9 @@ LONG_WINDOW = 200
 # Backtest configurations
 INITIAL_CAPITAL = 100000
 
-# Risk Management parameters (used later)
+# Transaction cost applied on each position switch
+TRANSITION_COST = 0.002  # 0.2%
+
+# Risk Management parameters
 MAX_RISK_PER_TRADE = 0.02  # 2%
 MAX_DRAWDOWN_LIMIT = 0.10  # 10%
