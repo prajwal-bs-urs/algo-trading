@@ -81,6 +81,32 @@ BUY: {buy_etf}
 """
 
 
+def get_latest_signal():
+
+    data = get_data()
+
+    data = generate_signals(data)
+
+    latest_signal = data["Signal"].iloc[-1]
+    previous_signal = data["Signal"].iloc[-2]
+
+    (
+        _allocator_nav,
+        allocator_return,
+        nifty_return,
+        alpha,
+        _position,
+    ) = compute_returns(data)
+
+    return (
+        latest_signal,
+        previous_signal,
+        allocator_return,
+        nifty_return,
+        alpha,
+    )
+
+
 # ==============================
 # Telegram message builder
 # ==============================
