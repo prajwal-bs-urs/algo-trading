@@ -40,3 +40,22 @@ def get_data():
     print("Dataset length (years):", len(data) / 252)
 
     return data
+
+
+def get_data_range(start_date: str, end_date: str) -> pd.DataFrame:
+    """Download NIFTY and BANK data for a specific date range.
+
+    Used by walk-forward analysis to slice history into windows.
+    """
+    nifty = yf.download("^NSEI", start=start_date, end=end_date, progress=False)
+    bank = yf.download("^NSEBANK", start=start_date, end=end_date, progress=False)
+
+    data = pd.concat(
+        [nifty["Close"], bank["Close"]],
+        axis=1,
+        join="inner",
+    )
+    data.columns = ["NIFTY", "BANK"]
+    data.dropna(inplace=True)
+
+    return data
