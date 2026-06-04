@@ -1,16 +1,7 @@
 from data_loader import get_data
 from config import INITIAL_CAPITAL
+from performance_metrics import calculate_max_drawdown
 import pandas as pd
-
-
-def calculate_drawdown(equity_curve):
-    equity_series = pd.Series(equity_curve)
-
-    rolling_max = equity_series.cummax()
-
-    drawdown = (equity_series - rolling_max) / rolling_max
-
-    return drawdown.min()
 
 
 def run_backtest(window):
@@ -110,7 +101,7 @@ def run_backtest(window):
 
     CAGR = ((final_value / INITIAL_CAPITAL) ** (1 / years) - 1) * 100
 
-    max_drawdown = calculate_drawdown(equity_curve) * 100
+    max_drawdown = calculate_max_drawdown(equity_curve) * 100
 
     return CAGR, max_drawdown
 
