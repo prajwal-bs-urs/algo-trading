@@ -92,7 +92,9 @@ def generate_signals(data):
 
     filtered = []
 
-    last_signal = 0
+    # Seed with the first real signal so we never emit signal 0,
+    # which would cause KeyErrors in downstream lookups.
+    last_signal = signals[0] if signals else 1
 
     holding_days = MIN_HOLD_DAYS
 
