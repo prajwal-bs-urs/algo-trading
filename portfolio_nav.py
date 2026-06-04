@@ -1,12 +1,14 @@
-INITIAL_CAPITAL = 100000
-TRANSITION_COST = 0.002
+from config import INITIAL_CAPITAL, TRANSITION_COST
 
 
 def compute_portfolio_nav(data):
+    if data.empty:
+        return INITIAL_CAPITAL, None
 
     capital = INITIAL_CAPITAL
     units = 0
     position = None
+    price_map = {}
 
     for i in range(len(data)):
 
