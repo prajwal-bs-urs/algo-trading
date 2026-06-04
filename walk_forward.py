@@ -1,49 +1,9 @@
 from datetime import datetime
 import pandas as pd
-import yfinance as yf
 
 from config import INITIAL_CAPITAL
-
-SYMBOL_1 = "^NSEI"
-SYMBOL_2 = "^NSEBANK"
-
-
-def calculate_drawdown(equity_curve):
-    equity_series = pd.Series(equity_curve)
-
-    rolling_max = equity_series.cummax()
-
-    drawdown = (equity_series - rolling_max) / rolling_max
-
-    return drawdown.min()
-
-
-def get_data(start_date, end_date):
-    nifty = yf.download(
-        SYMBOL_1,
-        start=start_date,
-        end=end_date,
-        progress=False
-    )
-
-    bank = yf.download(
-        SYMBOL_2,
-        start=start_date,
-        end=end_date,
-        progress=False
-    )
-
-    data = pd.concat(
-        [nifty["Close"], bank["Close"]],
-        axis=1,
-        join="inner"
-    )
-
-    data.columns = ["NIFTY", "BANK"]
-
-    data.dropna(inplace=True)
-
-    return data
+from data_loader import get_data_range
+from performance_metrics import calculate_max_drawdown
 
 
 def run_backtest(data, window):
@@ -140,7 +100,7 @@ def run_backtest(data, window):
 
     CAGR = ((final_value / INITIAL_CAPITAL) ** (1 / years) - 1) * 100
 
-    max_dd = calculate_drawdown(equity_curve) * 100
+    max_dd = calculate_max_drawdown(equity_curve) * 100
 
     return CAGR, max_dd
 
@@ -160,7 +120,7 @@ print("\nRunning walk-forward validation...\n")
 for start, end in windows:
     print(f"Testing period: {start} → {end}")
 
-    dataset = get_data(start, end)
+    dataset = get_data_range(start, end)
 
     CAGR, dd = run_backtest(dataset, test_window)
 
