@@ -24,3 +24,4 @@ timestamp,current_signal,previous_signal,switch_required,suggested_etf,allocator
 2026-10-23 15:24,USDINR,MIDCAP,True,USDINR (Cash Proxy),181.55,159.5,22.05
 2026-10-30 16:47,USDINR,USDINR,False,USDINR (Cash Proxy),175.9,167.24,8.66
 2026-11-06 17:39,BANK,USDINR,True,BANKBEES,170.51,194.58,-24.06
+2026-11-13 17:59,BANK,BANK,False,BANKBEES,185.27,210.1,-24.83
